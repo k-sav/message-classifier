@@ -99,6 +99,67 @@
         "business_value_score": 0.4,
         "focus_summary_type": "General"
       }
+    },
+    {
+      "name": "Edge Case: Validation Failure - Too Long",
+      "text": "This message is intentionally too long and should fail validation. Lorem ipsum dolor sit amet, consectetur adipiscing elit...",
+      "note": "In real test, this would be 5000+ characters and fail validation",
+      "expected": {
+        "validation_error": true
+      }
+    },
+    {
+      "name": "Edge Case: With Control Characters",
+      "text": "Hello\u0001\u0002World\u0003Test",
+      "note": "Control characters should be sanitized out, leaving 'Hello World Test'",
+      "expected": {
+        "sanitized": "Hello World Test"
+      }
+    },
+    {
+      "name": "Edge Case: XSS Attempt",
+      "text": "<script>alert('xss')</script>Need to book you for Friday",
+      "note": "Script tags should be detected but message still processed. Booking keywords should still be classified.",
+      "expected": {
+        "focus_summary_type": "Booking",
+        "suspicious": true
+      }
+    },
+    {
+      "name": "Edge Case: Excessive Whitespace",
+      "text": "  Need  to   book    you    for   Friday   ASAP!   ",
+      "note": "Multiple spaces should be collapsed to single spaces and trimmed",
+      "expected": {
+        "sanitized": "Need to book you for Friday ASAP!",
+        "focus_summary_type": "Booking"
+      }
+    },
+    {
+      "name": "Edge Case: Unicode and Emojis",
+      "text": "Hi! 你好 Need to book you for event 🎉🎊 Budget: €2000 💰",
+      "note": "Unicode and emojis should be preserved",
+      "expected": {
+        "needs_reply": true,
+        "business_value_score": 1.0,
+        "focus_summary_type": "Booking"
+      }
+    },
+    {
+      "name": "Edge Case: Empty After Sanitization",
+      "text": "\u0001\u0002\u0003   \n\n\t  ",
+      "note": "Message with only control chars and whitespace should fail validation",
+      "expected": {
+        "validation_error": true
+      }
+    },
+    {
+      "name": "Edge Case: Ambiguous Message",
+      "text": "Hey there! Just checking in.",
+      "note": "Should result in incomplete heuristic, requiring LLM classification",
+      "expected": {
+        "heuristic_incomplete": true,
+        "llm_required": true
+      }
     }
   ]
 }

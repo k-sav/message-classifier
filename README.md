@@ -10,6 +10,7 @@ A Node.js Express API playground for classifying incoming chat messages using a 
 - 🤖 **AI-Powered Fallback** - Uses GPT-4o-mini for edge cases
 - 📊 **Structured Output** - Returns consistent JSON with urgency scores, business value, and categories
 - 🔍 **Multiple Categories** - Supports Booking, Collab, Brand reaching, Feature, Invoice, Refund, Affiliate, and General
+- ✅ **Schema Validation** - Zod runtime validation ensures LLM responses match expected format
 
 ## How It Works
 
@@ -260,6 +261,313 @@ To modify classification rules, edit the `SYSTEM_PROMPT` in `server.js`. You can
 **Module Not Found**
 
 - Run `yarn install` to install dependencies
+
+## Testing
+
+The project includes comprehensive unit tests for validation and heuristic classification logic.
+
+### Run All Tests
+
+```bash
+# Run API integration tests
+yarn test
+
+# Run unit tests only
+yarn test:units
+```
+
+### Test Files
+
+- `tests/validator.test.js` - Input validation and sanitization tests
+- `tests/heuristics.test.js` - Classification logic tests
+- `tests/schema.test.js` - Zod schema validation tests
+- `test-messages.json` - Sample messages including edge cases
+
+### Test Coverage
+
+Unit tests cover:
+
+- All classification categories (Booking, Invoice, Refund, Collab, etc.)
+- Time sensitivity scoring (urgent, soon, planning, casual)
+- Business value scoring (high, medium, low)
+- Reply detection
+- Input validation (null, undefined, too long, empty)
+- Sanitization (control characters, whitespace, emojis)
+- Edge cases (XSS attempts, Unicode, excessive whitespace)
+- **Schema validation** (type checking, range validation, required fields)
+
+## Production Deployment
+
+### SQS Integration
+
+This classifier is designed to run as part of an existing application, processing messages from an SQS queue rather than exposing a REST endpoint.
+
+**Typical Integration Flow:**
+
+```javascript
+// SQS Message Handler
+async function handleSQSMessage(sqsEvent) {
+  for (const record of sqsEvent.Records) {
+    const message = JSON.parse(record.body);
+
+    // Message structure from Stream Chat
+    const {
+      id: messageId, // Stream Chat message ID
+      text: messageContent, // The actual message text
+      type: eventType, // "message.new" or "message.updated"
+      user,
+      channel,
+    } = message;
+
+    // Classify the message
+    const classification = await classifyMessage(messageContent);
+
+    // Process based on classification
+    if (
+      classification.business_value_score >= 0.7 &&
+      classification.time_sensitive_score >= 0.7
+    ) {
+      await notifyCreator(messageId, classification);
+    }
+  }
+}
+```
+
+### Caching Strategy
+
+**Important:** Implement caching to prevent duplicate classifications when SQS replays events.
+
+**Cache Key Format:**
+
+```
+{stream_chat_message_id}_{eventType}
+```
+
+**Examples:**
+
+- `msg_abc123_message.new` - New message event
+- `msg_abc123_message.updated` - Message edited event
+
+**Why This Matters:**
+
+- SQS can deliver the same message multiple times
+- Message edits (`message.updated`) should be reclassified
+- New messages (`message.new`) only need one classification
+- Prevents unnecessary OpenAI API calls (saves cost)
+
+**Recommended Implementation:**
+
+```javascript
+// Pseudo-code for production caching
+const cacheKey = `${messageId}_${eventType}`;
+const cached = await redis.get(cacheKey);
+
+if (cached) {
+  console.log("Using cached classification");
+  return JSON.parse(cached);
+}
+
+const classification = await classifyMessage(messageContent);
+
+// Cache for 24 hours
+await redis.setex(cacheKey, 86400, JSON.stringify(classification));
+
+return classification;
+```
+
+**Cache Backend Options:**
+
+- **Redis** - Fast, distributed, TTL support
+- **DynamoDB** - Serverless, auto-scales, TTL support
+- **ElastiCache** - Managed Redis/Memcached on AWS
+
+**TTL Recommendations:**
+
+- Development: 1 hour
+- Production: 24 hours (prevents same-day duplicates)
+- Extended: 7 days (if needed for historical data)
+
+## Monitoring & Metrics
+
+### Key Metrics to Track
+
+**Classification Performance:**
+
+- Heuristic hit rate (% using heuristic vs LLM)
+- Average response time (heuristic vs LLM)
+- Classification distribution by type
+- Confidence scores over time
+
+**Cost Optimization:**
+
+- Total OpenAI API calls per day
+- Total tokens consumed
+- Cost per classification
+- Savings from heuristic approach
+
+**System Health:**
+
+- Error rate
+- Validation failures
+- Messages per minute
+- Queue depth (if using SQS)
+
+### Sample Metrics Dashboard
+
+```javascript
+// Example metrics logging
+const metrics = {
+  timestamp: new Date().toISOString(),
+  method: "heuristic", // or 'llm'
+  execution_time_ms: 2,
+  focus_type: "Booking",
+  business_value: 1.0,
+  time_sensitive: 1.0,
+  tokens_used: 0, // 0 for heuristic, actual count for LLM
+  message_length: 50,
+};
+
+// Send to monitoring service (CloudWatch, DataDog, etc.)
+await metrics.log("message.classified", metrics);
+```
+
+### Alerting Thresholds
+
+- **Error Rate** > 5% - Investigate immediately
+- **LLM Usage** > 60% - Consider improving heuristics
+- **Response Time** > 1000ms (p95) - Check API performance
+- **Daily Token Limit** > 80% - Increase heuristic coverage
+
+## Optimization
+
+### Tuning Heuristics
+
+The heuristic patterns are centralized in `src/heuristics/patterns.js` for easy updates:
+
+```javascript
+// Example: Add new booking keyword
+BUSINESS_PATTERNS.HIGH_VALUE.patterns.push({
+  regex: /\b(appointment|meeting)\b/i,
+  type: "Booking",
+});
+```
+
+**Optimization Process:**
+
+1. Monitor classification results
+2. Identify patterns that frequently go to LLM
+3. Add/refine heuristic patterns
+4. Test changes with unit tests
+5. Deploy and measure improvement
+
+### Confidence Thresholds
+
+Adjust when to use LLM vs heuristics:
+
+```javascript
+const confidence = getHeuristicConfidence(heuristic);
+
+// Current: Use heuristic only if 100% confident
+if (confidence === 1.0) {
+  /* use heuristic */
+}
+
+// Alternative: Use heuristic if 75%+ confident
+if (confidence >= 0.75) {
+  /* use heuristic */
+}
+```
+
+### A/B Testing
+
+Consider testing different approaches:
+
+- **Heuristic-first** (current) vs **LLM-always**
+- Different confidence thresholds
+- Pattern variations
+- Different LLM models (gpt-4o-mini vs gpt-4o)
+
+### Pattern Refinement Tips
+
+1. **Add domain-specific terms** - Industry jargon, slang
+2. **Test with real data** - Use actual messages from your users
+3. **Balance precision vs recall** - More patterns = more coverage but potential false positives
+4. **Version control patterns** - Track changes and performance impact
+
+## Architecture Notes
+
+### Modular Design
+
+The codebase is organized for portability:
+
+```
+/src
+  /heuristics
+    - classifier.js   # Pure classification logic
+    - patterns.js     # Easy-to-update pattern rules
+    - validator.js    # Input sanitization
+  - schema.js         # Zod validation schemas
+server.js             # Express wrapper (can be removed)
+```
+
+**Benefits:**
+
+- Import directly into your production app
+- Test in isolation
+- Update patterns without touching core logic
+- No external dependencies (except OpenAI SDK and Zod)
+- Runtime type safety with Zod
+
+### Schema Validation with Zod
+
+All LLM responses are validated at runtime using Zod:
+
+```javascript
+const { validateClassification } = require("./src/schema");
+
+// Validates structure, types, ranges, and required fields
+const classification = validateClassification(llmResponse);
+```
+
+**What Zod Catches:**
+
+- Missing required fields
+- Invalid types (string instead of boolean)
+- Out-of-range scores (< 0 or > 1)
+- Invalid category types
+- Empty strings where not allowed
+
+**Error Handling:**
+If the LLM returns invalid data, the API returns a 500 error with details instead of crashing or returning malformed data.
+
+### Integration Example
+
+```javascript
+// In your production app
+const {
+  heuristicClassify,
+  isHeuristicComplete,
+} = require("./src/heuristics/classifier");
+const { validateMessage } = require("./src/heuristics/validator");
+
+async function processMessage(messageText) {
+  // Validate
+  const validation = validateMessage(messageText);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+
+  // Try heuristic first
+  const heuristic = heuristicClassify(validation.sanitized);
+
+  if (isHeuristicComplete(heuristic)) {
+    return formatResult(heuristic);
+  }
+
+  // Fallback to LLM
+  return await classifyWithLLM(validation.sanitized, heuristic);
+}
+```
 
 ## License
 

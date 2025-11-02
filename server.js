@@ -2,6 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const OpenAI = require('openai');
+const { heuristicClassify, isHeuristicComplete } = require('./src/heuristics/classifier');
+const { validateMessage } = require('./src/heuristics/validator');
+const { validateClassification } = require('./src/schema');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,80 +17,6 @@ const openai = new OpenAI({
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// Heuristic classification function
-function heuristicClassify(text) {
-  const lower = text.toLowerCase();
-  const result = {
-    business_value_score: null,
-    time_sensitive_score: null,
-    needs_reply: null,
-    focus_summary_type: null,
-    reason: null
-  };
-
-  // Business value scoring based on keywords
-  if (/\b(book|booking|reserve|hire|event|gig|performance|rate|invoice|payment|refund|paid|pay|contract)\b/.test(lower)) {
-    result.business_value_score = 1.0;
-    if (/\b(book|booking|reserve|hire|event|gig|performance)\b/.test(lower)) {
-      result.focus_summary_type = 'Booking';
-    } else if (/\b(invoice|payment|paid|pay)\b/.test(lower)) {
-      result.focus_summary_type = 'Invoice';
-    } else if (/\b(refund)\b/.test(lower)) {
-      result.focus_summary_type = 'Refund';
-    }
-  } else if (/\b(collab|collaborate|collaboration|partner|partnership|work together)\b/.test(lower)) {
-    result.business_value_score = 0.7;
-    result.focus_summary_type = 'Collab';
-  } else if (/\b(brand|sponsor|campaign|ambassador|promote|marketing)\b/.test(lower)) {
-    result.business_value_score = 0.7;
-    result.focus_summary_type = 'Brand reaching';
-  } else if (/\b(feature|request|suggest|add|improvement|bug|issue)\b/.test(lower)) {
-    result.business_value_score = 0.7;
-    result.focus_summary_type = 'Feature';
-  } else if (/\b(affiliate|commission|promote|referral)\b/.test(lower)) {
-    result.business_value_score = 0.7;
-    result.focus_summary_type = 'Affiliate';
-  } else if (/\b(shop|merch|discount|buy|purchase)\b/.test(lower)) {
-    result.business_value_score = 0.4;
-  } else if (/\b(love|amazing|great|awesome|fantastic|excellent|beautiful|wonderful)\b/.test(lower) && !/\?/.test(text)) {
-    result.business_value_score = 0.0;
-    result.focus_summary_type = 'General';
-  }
-
-  // Time sensitivity scoring
-  if (/\b(today|tonight|asap|urgent|immediately|right now|by\s+(monday|tuesday|wednesday|thursday|friday|mon|tue|wed|thu|fri)|by\s+end\s+of\s+(day|week)|\d{1,2}\/\d{1,2}|\d{1,2}:\d{2})\b/.test(lower)) {
-    result.time_sensitive_score = 1.0;
-  } else if (/\b(next week|soon|confirm|shipped yet|when|deadline)\b/.test(lower)) {
-    result.time_sensitive_score = 0.7;
-  } else if (/\b(how long|planning|schedule|rate|timeline)\b/.test(lower)) {
-    result.time_sensitive_score = 0.4;
-  } else if (/\b(love|thank|thanks|appreciate|congrat)\b/.test(lower) && !/\?/.test(text)) {
-    result.time_sensitive_score = 0.0;
-  }
-
-  // Reply needed
-  if (/\?|can you|would you|could you|please|let me know|confirm|need|want to|interested|available/.test(lower)) {
-    result.needs_reply = true;
-  } else if (/\b(love|thank|thanks|appreciate|congrat|awesome|amazing|great work)\b/.test(lower) && !/\?/.test(text)) {
-    result.needs_reply = false;
-  }
-
-  // Default to General if no specific type matched
-  if (result.focus_summary_type === null && result.business_value_score !== null) {
-    result.focus_summary_type = 'General';
-  }
-
-  return result;
-}
-
-// Check if heuristic result is complete
-function isHeuristicComplete(heuristic) {
-  return heuristic.business_value_score !== null &&
-         heuristic.time_sensitive_score !== null &&
-         heuristic.needs_reply !== null &&
-         heuristic.focus_summary_type !== null;
-}
 
 // System prompt for classification
 const SYSTEM_PROMPT = `You classify messages for a creator or small business.
@@ -138,19 +67,23 @@ app.post('/classify', async (req, res) => {
       });
     }
 
-    if (typeof message !== 'string' || message.trim().length === 0) {
-      return res.status(400).json({ 
-        error: 'Message must be a non-empty string' 
+    // Validate and sanitize message
+    const validation = validateMessage(message);
+    if (!validation.valid) {
+      return res.status(400).json({
+        error: validation.error
       });
     }
 
-    console.log(`\n📨 Classifying message: "${message.substring(0, 100)}${message.length > 100 ? '...' : ''}"`);
+    const sanitizedMessage = validation.sanitized;
+
+    console.log(`\n📨 Classifying message: "${sanitizedMessage.substring(0, 100)}${sanitizedMessage.length > 100 ? '...' : ''}"`);
 
     // Start timing
     const startTime = Date.now();
 
     // Step 1: Run heuristic classification
-    const heuristic = heuristicClassify(message);
+    const heuristic = heuristicClassify(sanitizedMessage);
     const isComplete = isHeuristicComplete(heuristic);
 
     console.log('🔍 Heuristic results:', JSON.stringify(heuristic, null, 2));
@@ -187,7 +120,7 @@ app.post('/classify', async (req, res) => {
     console.log('🤖 Using LLM (heuristic incomplete)');
 
     // Build user prompt with hints if available
-    let userPrompt = `Message: <<<${message}>>>`;
+    let userPrompt = `Message: <<<${sanitizedMessage}>>>`;
     
     const hints = [];
     if (heuristic.business_value_score !== null) {
@@ -224,7 +157,18 @@ app.post('/classify', async (req, res) => {
       temperature: 0.3,
     });
 
-    const classification = JSON.parse(completion.choices[0].message.content);
+    // Parse and validate the response with Zod
+    let classification;
+    try {
+      const rawResponse = JSON.parse(completion.choices[0].message.content);
+      classification = validateClassification(rawResponse);
+    } catch (validationError) {
+      console.error('❌ LLM response validation failed:', validationError.message);
+      return res.status(500).json({
+        error: 'Invalid classification response from LLM',
+        details: validationError.message
+      });
+    }
 
     const executionTime = Date.now() - startTime;
     console.log('✅ Classification result:', JSON.stringify(classification, null, 2));

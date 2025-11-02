@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "./test.sh"
+    "test": "./test.sh",
+    "test:units": "node tests/validator.test.js && node tests/heuristics.test.js && node tests/schema.test.js"
   },
   "keywords": [
     "openai",
@@ -19,6 +20,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "openai": "^4.20.0"
+    "openai": "^4.20.0",
+    "zod": "^4.1.12"
   }
 }
