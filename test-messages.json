@@ -1,0 +1,105 @@
+{
+  "messages": [
+    {
+      "name": "Urgent Booking",
+      "text": "Hi! I'd like to book you for a corporate event this Friday evening. We need a DJ from 7-11pm. Can you confirm availability ASAP? Budget is $2000.",
+      "expected": {
+        "needs_reply": true,
+        "time_sensitive_score": 1.0,
+        "business_value_score": 1.0,
+        "focus_summary_type": "Booking"
+      }
+    },
+    {
+      "name": "Invoice Follow-up",
+      "text": "Hey, I sent payment last week but haven't received the invoice yet. Can you send it by end of day? I need it for my expense report.",
+      "expected": {
+        "needs_reply": true,
+        "time_sensitive_score": 1.0,
+        "business_value_score": 1.0,
+        "focus_summary_type": "Invoice"
+      }
+    },
+    {
+      "name": "Refund Request",
+      "text": "The product I ordered never shipped. Can I get a refund? This was supposed to arrive last week.",
+      "expected": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.7,
+        "business_value_score": 1.0,
+        "focus_summary_type": "Refund"
+      }
+    },
+    {
+      "name": "Collaboration Inquiry",
+      "text": "Love your work! I'm working on a project next month and would love to collaborate. Are you open to discussing a partnership? No rush!",
+      "expected": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.4,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Collab"
+      }
+    },
+    {
+      "name": "Brand Outreach",
+      "text": "Hi! I represent Nike and we're looking for creators to partner with for our new campaign launching next quarter. Would you be interested in learning more?",
+      "expected": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.4,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Brand reaching"
+      }
+    },
+    {
+      "name": "Feature Request",
+      "text": "Would be great if you added dark mode to your app. Just a suggestion for future updates!",
+      "expected": {
+        "needs_reply": false,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Feature"
+      }
+    },
+    {
+      "name": "Affiliate Inquiry",
+      "text": "Do you have an affiliate program? I'd love to promote your products to my audience.",
+      "expected": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Affiliate"
+      }
+    },
+    {
+      "name": "Casual Compliment",
+      "text": "Just wanted to say your latest post was amazing! Keep up the great work! 🔥",
+      "expected": {
+        "needs_reply": false,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.0,
+        "focus_summary_type": "General"
+      }
+    },
+    {
+      "name": "General Question",
+      "text": "What camera do you use for your videos? Been following for a while and love the quality.",
+      "expected": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.4,
+        "focus_summary_type": "General"
+      }
+    },
+    {
+      "name": "Time-Sensitive Logistics",
+      "text": "Can you confirm you received my package? I need to know if I should reship by tomorrow.",
+      "expected": {
+        "needs_reply": true,
+        "time_sensitive_score": 1.0,
+        "business_value_score": 0.4,
+        "focus_summary_type": "General"
+      }
+    }
+  ]
+}
+
