@@ -1,7 +1,7 @@
 {
-  "name": "openai-message-classifier",
+  "name": "message-classifier",
   "version": "1.0.0",
-  "description": "OpenAI playground for classifying chat messages",
+  "description": "test classifying chat messages",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
