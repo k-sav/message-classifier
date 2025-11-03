@@ -1,0 +1,305 @@
+{
+  "examples": [
+    {
+      "message": "Hi! I'd like to book you for a corporate event this Friday. Can you confirm ASAP?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 1.0,
+        "business_value_score": 1.0,
+        "focus_summary_type": "Booking",
+        "reason": "Urgent booking request with specific date"
+      }
+    },
+    {
+      "message": "Need a DJ for our wedding next month. What's your rate?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.4,
+        "business_value_score": 1.0,
+        "focus_summary_type": "Booking",
+        "reason": "Wedding booking inquiry with planning timeframe"
+      }
+    },
+    {
+      "message": "Can you send me the invoice for last week's event? Need it by EOD for accounting.",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 1.0,
+        "business_value_score": 1.0,
+        "focus_summary_type": "Invoice",
+        "reason": "Invoice request with same-day deadline"
+      }
+    },
+    {
+      "message": "I sent payment yesterday but haven't received the invoice yet.",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.7,
+        "business_value_score": 1.0,
+        "focus_summary_type": "Invoice",
+        "reason": "Invoice follow-up implying soon response needed"
+      }
+    },
+    {
+      "message": "The product never arrived. I need a full refund.",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.7,
+        "business_value_score": 1.0,
+        "focus_summary_type": "Refund",
+        "reason": "Refund request requiring prompt response"
+      }
+    },
+    {
+      "message": "This item isn't what I expected. Can I return it?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.4,
+        "business_value_score": 1.0,
+        "focus_summary_type": "Refund",
+        "reason": "Return inquiry about product dissatisfaction"
+      }
+    },
+    {
+      "message": "Love your work! Would you be interested in collaborating on a project?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Collab",
+        "reason": "Collaboration proposal with no urgency"
+      }
+    },
+    {
+      "message": "We're working on something cool and think you'd be perfect. Free next week to chat?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.7,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Collab",
+        "reason": "Collaboration inquiry with near-term meeting request"
+      }
+    },
+    {
+      "message": "Hi, I represent Nike. We'd love to partner with you for our new campaign.",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.4,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Brand reaching",
+        "reason": "Brand partnership opportunity requiring discussion"
+      }
+    },
+    {
+      "message": "We're a skincare brand looking for ambassadors. Interested?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Brand reaching",
+        "reason": "Brand ambassador inquiry with no deadline"
+      }
+    },
+    {
+      "message": "Would be great if you added dark mode to your app!",
+      "classification": {
+        "needs_reply": false,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Feature",
+        "reason": "Feature suggestion without explicit request"
+      }
+    },
+    {
+      "message": "Bug: The app crashes when I click submit. Can you fix this?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.7,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Feature",
+        "reason": "Bug report requiring acknowledgment and fix"
+      }
+    },
+    {
+      "message": "Do you have an affiliate program? I'd love to promote your products.",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Affiliate",
+        "reason": "Affiliate program inquiry without urgency"
+      }
+    },
+    {
+      "message": "What's the commission structure for your affiliate program?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Affiliate",
+        "reason": "Specific affiliate details request"
+      }
+    },
+    {
+      "message": "Your latest post was amazing! Keep up the great work! 🔥",
+      "classification": {
+        "needs_reply": false,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.0,
+        "focus_summary_type": "General",
+        "reason": "Casual compliment requiring no action"
+      }
+    },
+    {
+      "message": "Thanks for the quick response!",
+      "classification": {
+        "needs_reply": false,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.0,
+        "focus_summary_type": "General",
+        "reason": "Appreciation message with no action needed"
+      }
+    },
+    {
+      "message": "What camera do you use for your videos?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.4,
+        "focus_summary_type": "General",
+        "reason": "General inquiry about equipment"
+      }
+    },
+    {
+      "message": "Can you confirm you received my package? Need to know by tomorrow.",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 1.0,
+        "business_value_score": 0.4,
+        "focus_summary_type": "General",
+        "reason": "Logistics confirmation with explicit deadline"
+      }
+    },
+    {
+      "message": "I need to reschedule our meeting to next Tuesday. Works for you?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.7,
+        "business_value_score": 1.0,
+        "focus_summary_type": "Booking",
+        "reason": "Meeting reschedule requiring confirmation"
+      }
+    },
+    {
+      "message": "How much do you charge for a 2-hour session?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.4,
+        "business_value_score": 1.0,
+        "focus_summary_type": "Booking",
+        "reason": "Rate inquiry for potential booking"
+      }
+    },
+    {
+      "message": "I was charged twice. Can you please check and refund the duplicate?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 1.0,
+        "business_value_score": 1.0,
+        "focus_summary_type": "Refund",
+        "reason": "Urgent double charge issue requiring immediate attention"
+      }
+    },
+    {
+      "message": "Hey! We're launching a new product and would love your input as a creator.",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.4,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Collab",
+        "reason": "Product collaboration opportunity with planning timeframe"
+      }
+    },
+    {
+      "message": "Just discovered your content. Absolutely brilliant!",
+      "classification": {
+        "needs_reply": false,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.0,
+        "focus_summary_type": "General",
+        "reason": "New follower compliment with no action needed"
+      }
+    },
+    {
+      "message": "Where can I buy your merch?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.4,
+        "focus_summary_type": "General",
+        "reason": "Merchandise inquiry from potential customer"
+      }
+    },
+    {
+      "message": "We'd like to sponsor your next video. Let's discuss rates ASAP.",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 1.0,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Brand reaching",
+        "reason": "Sponsorship offer with urgent discussion request"
+      }
+    },
+    {
+      "message": "The app keeps freezing on iOS. This is frustrating!",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.7,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Feature",
+        "reason": "Critical bug report requiring acknowledgment"
+      }
+    },
+    {
+      "message": "Do you offer payment plans for your services?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.4,
+        "business_value_score": 1.0,
+        "focus_summary_type": "Booking",
+        "reason": "Payment inquiry for potential booking"
+      }
+    },
+    {
+      "message": "I'd like to add you to our roster of creators. Can we set up a call?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.4,
+        "business_value_score": 0.7,
+        "focus_summary_type": "Brand reaching",
+        "reason": "Brand roster invitation requiring discussion"
+      }
+    },
+    {
+      "message": "How do I cancel my subscription?",
+      "classification": {
+        "needs_reply": true,
+        "time_sensitive_score": 0.4,
+        "business_value_score": 1.0,
+        "focus_summary_type": "General",
+        "reason": "Subscription cancellation inquiry requiring guidance"
+      }
+    },
+    {
+      "message": "Congrats on hitting 100K! Well deserved! 🎉",
+      "classification": {
+        "needs_reply": false,
+        "time_sensitive_score": 0.0,
+        "business_value_score": 0.0,
+        "focus_summary_type": "General",
+        "reason": "Congratulatory message with no action required"
+      }
+    }
+  ]
+}
+
