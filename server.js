@@ -5,7 +5,8 @@ const OpenAI = require('openai');
 const { heuristicClassify, isHeuristicConclusive } = require('./src/heuristics/classifier');
 const { validateMessage } = require('./src/heuristics/validator');
 const { validateClassification } = require('./src/schema');
-const { CLASSIFICATION_PROMPT, buildHintsFromHeuristic } = require('./src/prompts');
+const { CLASSIFICATION_PROMPT, buildHintsFromHeuristic, buildPromptWithExamples } = require('./src/prompts');
+const { getEmbedding, findSimilarExamples, areEmbeddingsAvailable } = require('./src/utils/embeddings');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -95,16 +96,30 @@ app.post('/classify', async (req, res) => {
       });
     }
 
-    // Step 3: Partial or no match - use LLM with hints
+    // Step 3: Partial or no match - use LLM with embeddings and hints
     console.log('🤖 Using LLM (heuristic inconclusive)');
 
-    // Build user prompt with hints from heuristic
-    let userPrompt = `Message: <<<${sanitizedMessage}>>>`;
+    // Get similar examples using embeddings
+    let similarExamples = [];
+    let usedEmbeddings = false;
     
-    const hints = buildHintsFromHeuristic(heuristic);
-    if (hints.length > 0) {
-      userPrompt += `\n\nHints (you may override if context suggests otherwise):\n${hints.join('\n')}`;
+    if (areEmbeddingsAvailable()) {
+      try {
+        console.log('🔍 Finding similar examples...');
+        const messageEmbedding = await getEmbedding(sanitizedMessage, openai);
+        similarExamples = findSimilarExamples(sanitizedMessage, messageEmbedding, 3);
+        usedEmbeddings = true;
+        console.log(`✓ Found ${similarExamples.length} similar examples (similarity: ${similarExamples.map(e => e.similarity.toFixed(3)).join(', ')})`);
+      } catch (error) {
+        console.warn('⚠️  Failed to get embeddings:', error.message);
+      }
     }
+
+    // Build user prompt with examples and hints
+    const hints = buildHintsFromHeuristic(heuristic);
+    const userPrompt = usedEmbeddings 
+      ? buildPromptWithExamples(sanitizedMessage, similarExamples, hints)
+      : `Message: <<<${sanitizedMessage}>>>${hints.length > 0 ? `\n\nHints (you may override if context suggests otherwise):\n${hints.join('\n')}` : ''}`;
 
     // Call OpenAI API
     const completion = await openai.chat.completions.create({
@@ -146,6 +161,8 @@ app.post('/classify', async (req, res) => {
       metadata: {
         method: 'llm',
         hints_provided: hints.length > 0,
+        similar_examples_used: usedEmbeddings,
+        similar_examples_count: similarExamples.length,
         model: completion.model,
         tokens_used: completion.usage.total_tokens,
         execution_time_ms: executionTime,

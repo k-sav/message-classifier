@@ -53,8 +53,45 @@ function buildHintsFromHeuristic(heuristic) {
   return hints;
 }
 
+/**
+ * Builds a prompt with similar examples for few-shot learning
+ * Includes semantically similar examples to guide the LLM
+ * @param {string} message - The message to classify
+ * @param {Array} similarExamples - Array of similar examples with classifications
+ * @param {string[]} hints - Heuristic hints (optional)
+ * @returns {string} - Formatted user prompt with examples
+ */
+function buildPromptWithExamples(message, similarExamples, hints = []) {
+  let prompt = '';
+
+  // Add similar examples as few-shot demonstrations
+  if (similarExamples && similarExamples.length > 0) {
+    prompt += 'Here are similar messages and their correct classifications:\n\n';
+    
+    similarExamples.forEach((example, index) => {
+      const classification = example.classification;
+      prompt += `Example ${index + 1}:\n`;
+      prompt += `Message: "${example.message}"\n`;
+      prompt += `Classification: ${JSON.stringify(classification, null, 2)}\n\n`;
+    });
+
+    prompt += '---\n\n';
+  }
+
+  // Add the actual message to classify
+  prompt += `Now classify this message:\nMessage: <<<${message}>>>`;
+
+  // Add hints if available
+  if (hints.length > 0) {
+    prompt += `\n\nHints (you may override if context suggests otherwise):\n${hints.join('\n')}`;
+  }
+
+  return prompt;
+}
+
 module.exports = {
   CLASSIFICATION_PROMPT,
-  buildHintsFromHeuristic
+  buildHintsFromHeuristic,
+  buildPromptWithExamples
 };
 

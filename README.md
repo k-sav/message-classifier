@@ -7,6 +7,7 @@ A Node.js Express API playground for classifying incoming chat messages using a 
 - ⚡ **Hybrid Classification** - Fast heuristic pattern matching with AI fallback
 - 💰 **Cost Optimized** - Skips OpenAI API for obvious cases (saves money!)
 - 🎯 **Smart Hints** - Passes partial matches to LLM for better context
+- 🧠 **Few-Shot Learning** - Uses semantic embeddings to find similar examples for better accuracy
 - 🤖 **AI-Powered Fallback** - Uses GPT-4o-mini for edge cases
 - 📊 **Structured Output** - Returns consistent JSON with urgency scores, business value, and categories
 - 🔍 **Multiple Categories** - Supports Booking, Collab, Brand reaching, Feature, Invoice, Refund, Affiliate, and General
@@ -30,9 +31,20 @@ Fast, deterministic rule-based matching using regex patterns:
 - ⚠️ **Partial match?** → Pass hints to LLM (can override)
 - ❌ **No match?** → Use LLM with standard prompt
 
-### Stage 3: LLM Fallback
+### Stage 3: LLM Fallback (with Few-Shot Learning)
 
-When heuristics are incomplete, GPT-4o-mini provides nuanced classification with context awareness.
+When heuristics are inconclusive, the system:
+
+1. **Finds Similar Examples** - Uses OpenAI embeddings to find 3 semantically similar messages
+2. **Builds Few-Shot Prompt** - Includes similar examples to guide the LLM
+3. **Adds Hints** - Includes partial heuristic matches as suggestions
+4. **Calls LLM** - GPT-4o-mini provides nuanced classification with full context
+
+**Benefits:**
+- 📈 Higher accuracy from relevant examples
+- 🎯 More consistent outputs
+- 💡 Handles edge cases better
+- 💰 Minimal cost ($0.00002/message for embeddings)
 
 ### Examples
 
@@ -75,7 +87,23 @@ OPENAI_API_KEY=sk-your-actual-api-key-here
 PORT=3000
 ```
 
-### 3. Start the Server
+### 3. Generate Embeddings (Optional but Recommended)
+
+Generate embeddings for the example messages to enable few-shot learning:
+
+```bash
+yarn node scripts/generate-embeddings.js
+```
+
+This will:
+- Read 30 curated examples from `src/examples.json`
+- Generate embeddings using `text-embedding-3-small`
+- Save to `src/examples_with_embeddings.json`
+- Cost: ~$0.000008 (less than a penny!)
+
+**Note:** This only needs to run once (or when examples change).
+
+### 4. Start the Server
 
 ```bash
 yarn start
@@ -118,8 +146,11 @@ curl -X POST http://localhost:3000/classify \
   "metadata": {
     "method": "llm",
     "hints_provided": true,
+    "similar_examples_used": true,
+    "similar_examples_count": 3,
     "model": "gpt-4o-mini",
     "tokens_used": 245,
+    "execution_time_ms": 523,
     "timestamp": "2025-11-02T10:30:00.000Z"
   }
 }
@@ -509,8 +540,14 @@ The codebase is organized for portability:
     - classifier.js   # Pure classification logic
     - patterns.js     # Easy-to-update pattern rules
     - validator.js    # Input sanitization
+  /utils
+    - embeddings.js   # Semantic similarity utilities
   - schema.js         # Zod validation schemas
   - prompts.js        # LLM system prompts
+  - examples.json     # Curated training examples
+  - examples_with_embeddings.json  # Pre-computed embeddings
+/scripts
+  - generate-embeddings.js  # One-time embedding generator
 server.js             # Express wrapper (can be removed)
 ```
 
@@ -543,6 +580,31 @@ const classification = validateClassification(llmResponse);
 
 **Error Handling:**
 If the LLM returns invalid data, the API returns a 500 error with details instead of crashing or returning malformed data.
+
+### Few-Shot Learning with Embeddings
+
+The system uses OpenAI embeddings for semantic similarity:
+
+1. **Pre-computed Embeddings** - 30 curated examples are embedded once (cost: $0.000008)
+2. **Runtime Similarity** - New messages are embedded and compared using cosine similarity
+3. **Top-K Selection** - 3 most similar examples are included in the LLM prompt
+4. **Context Aware** - LLM learns from relevant examples in real-time
+
+**Cost Analysis:**
+- Embedding generation (one-time): $0.000008
+- Per-message embedding: $0.00002
+- Total added cost per classification: ~$0.00002 (negligible)
+
+**Accuracy Benefits:**
+- ✅ More consistent classifications
+- ✅ Better handling of edge cases
+- ✅ Fewer misclassifications
+- ✅ Learns from your specific domain examples
+
+**How to Update Examples:**
+1. Edit `src/examples.json` with new training examples
+2. Run `yarn node scripts/generate-embeddings.js`
+3. Restart the server
 
 ### Integration Example
 
