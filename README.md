@@ -239,12 +239,15 @@ const completion = await openai.chat.completions.create({
 
 ### Customization
 
-To modify classification rules, edit the `SYSTEM_PROMPT` in `server.js`. You can:
-
+**Prompts:** Edit `src/prompts.js` to modify classification instructions:
 - Add new categories to `focus_summary_type`
 - Adjust scoring criteria
-- Change the temperature (0.0-1.0) for more/less consistent results
-- Modify the JSON output structure
+- Update rules and examples
+
+**Model Settings:** Edit `server.js` to adjust:
+- Model choice (gpt-4o-mini, gpt-4o, etc.)
+- Temperature (0.0-1.0) for more/less consistent results
+- Other OpenAI parameters
 
 ## Troubleshooting
 
@@ -507,6 +510,7 @@ The codebase is organized for portability:
     - patterns.js     # Easy-to-update pattern rules
     - validator.js    # Input sanitization
   - schema.js         # Zod validation schemas
+  - prompts.js        # LLM system prompts
 server.js             # Express wrapper (can be removed)
 ```
 

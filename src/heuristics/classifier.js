@@ -160,11 +160,11 @@ function testPattern(pattern, text, lower) {
 }
 
 /**
- * Checks if heuristic result is complete (all fields have values)
+ * Checks if heuristic result is conclusive (all fields have values)
  * @param {Object} heuristic - Heuristic classification result
  * @returns {boolean} - Whether all required fields are non-null
  */
-function isHeuristicComplete(heuristic) {
+function isHeuristicConclusive(heuristic) {
   return heuristic.business_value_score !== null &&
          heuristic.time_sensitive_score !== null &&
          heuristic.needs_reply !== null &&
@@ -187,7 +187,7 @@ function getHeuristicConfidence(heuristic) {
 
 module.exports = {
   heuristicClassify,
-  isHeuristicComplete,
+  isHeuristicConclusive,
   getHeuristicConfidence,
   // Export individual functions for testing
   classifyBusinessValue,

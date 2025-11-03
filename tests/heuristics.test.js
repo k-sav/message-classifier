@@ -5,7 +5,7 @@
 
 const { 
   heuristicClassify, 
-  isHeuristicComplete,
+  isHeuristicConclusive,
   getHeuristicConfidence,
   classifyBusinessValue,
   classifyFocusType,
@@ -49,7 +49,7 @@ assertEqual(bookingResult.business_value_score, 1.0, 'Booking has high business 
 assertEqual(bookingResult.focus_summary_type, 'Booking', 'Booking classified correctly');
 assertEqual(bookingResult.time_sensitive_score, 1.0, 'Booking with ASAP is urgent');
 assertEqual(bookingResult.needs_reply, true, 'Booking needs reply');
-assertTrue(isHeuristicComplete(bookingResult), 'Booking classification is complete');
+assertTrue(isHeuristicConclusive(bookingResult), 'Booking classification is conclusive');
 
 // Test: Invoice message
 console.log('\n--- Invoice Classification ---');
@@ -113,8 +113,8 @@ assertEqual(complimentResult.focus_summary_type, 'General', 'Compliment classifi
 // Compliment with "amazing" and no "?" should match casual time pattern (0.0)
 assertTrue(complimentResult.time_sensitive_score === 0.0 || complimentResult.time_sensitive_score === null, 'Compliment is not urgent');
 assertEqual(complimentResult.needs_reply, false, 'Compliment does not need reply');
-// May be incomplete if time_sensitive_score is null
-assertTrue(isHeuristicComplete(complimentResult) || complimentResult.time_sensitive_score === null, 'Compliment classification status');
+// May be inconclusive if time_sensitive_score is null
+assertTrue(isHeuristicConclusive(complimentResult) || complimentResult.time_sensitive_score === null, 'Compliment classification status');
 
 // Test: Time sensitivity - urgent
 console.log('\n--- Time Sensitivity Tests ---');
@@ -176,11 +176,11 @@ assertEqual(getHeuristicConfidence(emptyResult), 0.0, 'Empty result has 0% confi
 console.log('\n--- Edge Cases ---');
 const emptyMsg = '';
 const emptyClassification = heuristicClassify(emptyMsg);
-assertTrue(!isHeuristicComplete(emptyClassification), 'Empty message has incomplete classification');
+assertTrue(!isHeuristicConclusive(emptyClassification), 'Empty message has inconclusive classification');
 
 const randomMsg = 'sdkfjhsdkfjh';
 const randomClassification = heuristicClassify(randomMsg);
-assertTrue(!isHeuristicComplete(randomClassification), 'Random text has incomplete classification');
+assertTrue(!isHeuristicConclusive(randomClassification), 'Random text has inconclusive classification');
 
 const mixedMsg = 'I love your work! Can you book me for an event Friday ASAP?';
 const mixedClassification = heuristicClassify(mixedMsg);
